@@ -16,21 +16,115 @@ Private Enum ARRAYS_ERROR
     ERROR_CODE = vbObjectError + 513
     NOT_AN_ARRAY = ERROR_CODE + 1
     NOT_DIMENSIONED = ERROR_CODE + 2
+    NOT_ONE_DIMENSION = ERROR_CODE + 3
+    NOT_SORTABLE_TYPE = ERROR_CODE + 4
 End Enum
 
-Public Function isSorted(ByRef arr As Variant)
+Private Type errorLocation
+    Class As String
+    Function As String
+    Variable As String
+End Type
 
-    If hasDimensions(arr) Then
+
+Public Function isSorted(ByRef arr As Variant) As Boolean
+
+    If numberOfDimensions(arr) <> 1 Then
     
-     'TODO is array sorted
+        raiseNotOneDimensionError errorLocation(CLASS_NAME, "isSorted", "arr")
     
     Else
     
-        raiseNotDimensionedError CLASS_NAME, "isSorted", "arr"
+        isSorted = isVectorSorted(arr)
     
     End If
     
 End Function
+
+Private Function isVectorSorted(ByRef arr As Variant) As Boolean
+
+    Dim left As Long, right As Long
+    
+    left = LBound(arr, 1)
+    
+    right = UBound(arr, 1)
+    
+    If isArrayOfStrings(arr) Then
+        
+        isVectorSorted = isStringVectorSortedBetween(arr, left, right)
+    
+    ElseIf isArrayOfNumeric(arr) Then
+        
+        isVectorSorted = isNumericalVectorSortedBetween(arr, left, right)
+    
+    Else
+        
+        raiseNotSortableDataTypeError errorLocation(CLASS_NAME, "isVectorSorted", "arr")
+    
+    End If
+        
+End Function
+
+Private Function isStringVectorSortedBetween(ByRef arr As Variant, ByRef left As Long, ByRef right As Long) As Boolean
+
+    Dim sorted As Boolean: sorted = True
+    
+    Do Until left = right Or Not sorted
+        
+        If VBA.StrComp(arr(left), arr(left + 1)) = 1 Then sorted = False
+        
+        left = left + 1
+        
+    Loop
+    
+    isStringVectorSortedBetween = sorted
+    
+End Function
+
+Private Function isNumericalVectorSortedBetween(ByRef arr As Variant, ByRef left As Long, ByRef right As Long) As Boolean
+
+    Dim sorted As Boolean: sorted = True
+    
+    Do Until left = right Or Not sorted
+        
+        If arr(left) > arr(left + 1) Then sorted = False
+        
+        left = left + 1
+        
+    Loop
+    
+    isNumericalVectorSortedBetween = sorted
+    
+End Function
+
+Private Function isArrayOfNumeric(ByRef arr As Variant) As Boolean
+
+    Select Case varTypeOfFirstElement(arr)
+    
+        Case vbBoolean, vbByte, vbCurrency, vbDate, vbDecimal, vbDouble, vbInteger, vbLong, vbSingle
+            
+            isArrayOfNumeric = True
+        
+        Case Else
+        
+            isArrayOfNumeric = False
+    
+    End Select
+        
+End Function
+
+Private Function isArrayOfStrings(ByRef arr As Variant) As Boolean
+
+    isArrayOfStrings = (varTypeOfFirstElement(arr) = vbString)
+        
+End Function
+
+Private Function varTypeOfFirstElement(ByRef arr As Variant) As VBA.VbVarType
+
+    varTypeOfFirstElement = VBA.VarType(arr(LBound(arr, 1)))
+    
+End Function
+
 
 Public Function numberOfDimensions(ByRef arr As Variant) As Long
     
@@ -40,7 +134,7 @@ Public Function numberOfDimensions(ByRef arr As Variant) As Long
     
     Else
     
-        raiseNotArrayError CLASS_NAME, "numberOfDimensions", "arr"
+        raiseNotArrayError errorLocation(CLASS_NAME, "numberOfDimensions", "arr")
     
     End If
     
@@ -61,7 +155,6 @@ Private Function numberOfArrayDimensions(ByRef arr As Variant) As Long
 
 End Function
 
-
 Public Function hasDimensions(ByRef arr As Variant)
 
     If VBA.IsArray(arr) Then
@@ -70,7 +163,7 @@ Public Function hasDimensions(ByRef arr As Variant)
     
     Else
     
-        raiseNotArrayError CLASS_NAME, "hasDimensions", "arr"
+        raiseNotArrayError errorLocation(CLASS_NAME, "hasDimensions", "arr")
     
     End If
 
@@ -94,26 +187,36 @@ ErrorCaused:
     
 End Function
 
-Private Sub raiseNotArrayError(ByRef className As String, ByRef functionName As String, ByRef variableName As String)
+Private Sub raiseNotArrayError(ByRef location As errorLocation)
     
-    Err.Raise NOT_AN_ARRAY, className, describeNotArrayError(className, functionName, variableName)
+    Err.Raise NOT_AN_ARRAY, location.Class, errorDescription(location, "is not an array")
 
 End Sub
 
-Private Function describeNotArrayError(ByRef className As String, ByRef functionName As String, ByRef variableName As String) As String
-
-    describeNotArrayError = className & " >> " & functionName & ". " & variableName & " is not an array"
-
-End Function
-
-Private Sub raiseNotDimensionedError(ByRef className As String, ByRef functionName As String, ByRef variableName As String)
+Private Sub raiseNotOneDimensionError(ByRef location As errorLocation)
     
-    Err.Raise NOT_DIMENSIONED, className, describeNotDimensionedError(className, functionName, variableName)
+    Err.Raise NOT_ONE_DIMENSION, location.Class, errorDescription(location, "does note have one dimension")
 
 End Sub
 
-Private Function describeNotDimensionedError(ByRef className As String, ByRef functionName As String, ByRef variableName As String) As String
+Private Function raiseNotSortableDataTypeError(ByRef location As errorLocation)
+    
+    Err.Raise NOT_SORTABLE_TYPE, location.Class, errorDescription(location, "is not a comparable datatype")
+    
+End Function
 
-    describeNotDimensionedError = className & " >> " & functionName & ". " & variableName & " is not dimensioned"
+Private Function errorDescription(ByRef location As errorLocation, ByRef description As String)
+    
+    errorDescription = location.Class & "." & location.Function & " >> " & location.Variable & " " & description
+    
+End Function
+
+Private Function errorLocation(ByRef className As String, ByRef functionName As String, ByRef variableName As String) As errorLocation
+
+    errorLocation.Class = className
+    errorLocation.Function = functionName
+    errorLocation.Variable = variableName
 
 End Function
+
+
