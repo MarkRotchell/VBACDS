@@ -29,9 +29,15 @@ End Type
 
 Public Function isSorted(ByRef arr As Variant) As Boolean
 
+    Const FUNCTION_NAME As String = "isSorted"
+
     If numberOfDimensions(arr) <> 1 Then
     
-        raiseNotOneDimensionError errorLocation(CLASS_NAME, "isSorted", "arr")
+        raiseNotOneDimensionError errorLocation(CLASS_NAME, FUNCTION_NAME, "arr")
+    
+    ElseIf Not isArrayOfSortables(arr) Then
+        
+        raiseNotSortableDataTypeError errorLocation(CLASS_NAME, FUNCTION_NAME, "arr")
     
     Else
     
@@ -42,60 +48,41 @@ Public Function isSorted(ByRef arr As Variant) As Boolean
 End Function
 
 Private Function isVectorSorted(ByRef arr As Variant) As Boolean
+    
+    Dim isStrings As Boolean: isStrings = isArrayOfStrings(arr)
+    
+    Dim i As Long: For i = LBound(arr, 1) To UBound(arr, 1) - 1
+    
+        If isAfterNeighbour(arr, i, isStrings) Then
+        
+            isVectorSorted = False
+            
+            Exit Function
+            
+        End If
+        
+    Next
+    
+    isVectorSorted = True
+        
+End Function
 
-    Dim left As Long, right As Long
-    
-    left = LBound(arr, 1)
-    
-    right = UBound(arr, 1)
-    
-    If isArrayOfStrings(arr) Then
+Private Function isAfterNeighbour(ByRef arr As Variant, ByRef Index As Long, ByRef isStrings As Boolean)
+
+    Const STRING1_AFTER_STRING2 As Byte = 1
+
+    If isStrings Then
         
-        isVectorSorted = isStringVectorSortedBetween(arr, left, right)
-    
-    ElseIf isArrayOfNumeric(arr) Then
+        isAfterNeighbour = VBA.StrComp(arr(Index), arr(Index + 1)) = STRING1_AFTER_STRING2
         
-        isVectorSorted = isNumericalVectorSortedBetween(arr, left, right)
-    
     Else
-        
-        raiseNotSortableDataTypeError errorLocation(CLASS_NAME, "isVectorSorted", "arr")
     
+        isAfterNeighbour = arr(Index) > arr(Index + 1)
+        
     End If
-        
-End Function
-
-Private Function isStringVectorSortedBetween(ByRef arr As Variant, ByRef left As Long, ByRef right As Long) As Boolean
-
-    Dim sorted As Boolean: sorted = True
-    
-    Do Until left = right Or Not sorted
-        
-        If VBA.StrComp(arr(left), arr(left + 1)) = 1 Then sorted = False
-        
-        left = left + 1
-        
-    Loop
-    
-    isStringVectorSortedBetween = sorted
     
 End Function
 
-Private Function isNumericalVectorSortedBetween(ByRef arr As Variant, ByRef left As Long, ByRef right As Long) As Boolean
-
-    Dim sorted As Boolean: sorted = True
-    
-    Do Until left = right Or Not sorted
-        
-        If arr(left) > arr(left + 1) Then sorted = False
-        
-        left = left + 1
-        
-    Loop
-    
-    isNumericalVectorSortedBetween = sorted
-    
-End Function
 
 Private Function isArrayOfNumeric(ByRef arr As Variant) As Boolean
 
@@ -118,6 +105,23 @@ Private Function isArrayOfStrings(ByRef arr As Variant) As Boolean
     isArrayOfStrings = (varTypeOfFirstElement(arr) = vbString)
         
 End Function
+
+Private Function isArrayOfSortables(ByRef arr As Variant) As Boolean
+
+    Select Case varTypeOfFirstElement(arr)
+    
+        Case vbBoolean, vbByte, vbCurrency, vbDate, vbDecimal, vbDouble, vbInteger, vbLong, vbSingle, vbString
+            
+            isArrayOfSortables = True
+        
+        Case Else
+        
+            isArrayOfSortables = False
+    
+    End Select
+        
+End Function
+
 
 Private Function varTypeOfFirstElement(ByRef arr As Variant) As VBA.VbVarType
 
@@ -214,7 +218,9 @@ End Function
 Private Function errorLocation(ByRef className As String, ByRef functionName As String, ByRef variableName As String) As errorLocation
 
     errorLocation.Class = className
+    
     errorLocation.Function = functionName
+    
     errorLocation.Variable = variableName
 
 End Function
