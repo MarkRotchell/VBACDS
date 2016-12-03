@@ -24,11 +24,71 @@ Private Enum MODULE_TYPE
     FORM_MODULE = vbext_ComponentType.vbext_ct_MSForm
 End Enum
 
-Public Sub ExportSourceFiles(ByRef Project As VBProject, ByVal destinationPath As String)
+Public Sub Export()
+    Me.ExportSourceFiles Application.VBE.VBProjects("VBACDS"), "C:\VBACDS\ForGit\"
+End Sub
+
+Public Sub Remove()
+    Me.RemoveAllCodeModules Application.VBE.VBProjects("VBACDS"), "GitTools"
+End Sub
+
+Public Sub Import()
+    Me.ImportSourceFiles Application.VBE.VBProjects("VBACDS"), "C:\VBACDS\ForGit\"
+End Sub
+
+Public Sub ImportSourceFiles(ByRef project As VBProject, ByRef sourcePath As String)
+    
+    If isDirectory(sourcePath) Then
+    
+        ImportSourceFilesFromDirectory project, sourcePath
+    
+    Else
+    
+        raiseNotValidDirectoryError CLASS_NAME, "importSourceFiles", sourcePath
+    
+    End If
+    
+End Sub
+
+Private Sub ImportSourceFilesFromDirectory(ByRef project As VBProject, ByRef sourcePath As String)
+
+    Dim fileName As String: fileName = Dir(sourcePath & "*")
+    
+    Do Until fileName = vbNullString
+        project.VBComponents.Import sourcePath & fileName
+        fileName = Dir
+    Loop
+
+End Sub
+
+
+Public Sub RemoveAllCodeModules(ByRef project As VBProject, Optional ByRef Exception As String)
+
+    Dim module As VBComponent
+    
+    For Each module In project.VBComponents
+    
+        RemoveIfCodeModule module, Exception
+        
+    Next module
+    
+End Sub
+
+Private Sub RemoveIfCodeModule(ByRef module As VBComponent, Optional ByRef Exception As String)
+
+    If isCodeModule(module) And module.Name <> Exception Then
+        
+        module.Collection.Remove module
+    
+    End If
+
+End Sub
+
+Public Sub ExportSourceFiles(ByRef project As VBProject, ByVal destinationPath As String)
 
     If isDirectory(destinationPath) Then
         
-        exportSourceFilesToDirectory Project, destinationPath
+        exportSourceFilesToDirectory project, destinationPath
     
     Else
         
@@ -40,31 +100,35 @@ End Sub
 
 Private Function isDirectory(ByRef directoryPath As String) As Boolean
 
-    isDirectory = (Dir(directoryPath, vbDirectory) <> vbNullString)
+    isDirectory = (VBA.Dir(directoryPath, vbDirectory) <> vbNullString)
 
 End Function
 
-Private Sub exportSourceFilesToDirectory(ByRef Project As VBProject, ByVal destinationPath As String)
+Private Sub exportSourceFilesToDirectory(ByRef project As VBProject, ByVal destinationPath As String)
     
-    Dim Module As VBComponent
+    Dim module As VBComponent
     
-    For Each Module In Project.VBComponents
+    For Each module In project.VBComponents
         
-        exportIfCodeModule Module, destinationPath
+        exportIfCodeModule module, destinationPath
     
-    Next Module
+    Next module
 
 End Sub
 
-Private Sub exportIfCodeModule(ByRef Module As VBComponent, ByVal destinationPath As String)
+Private Sub exportIfCodeModule(ByRef module As VBComponent, ByVal destinationPath As String)
     
-    If isCodeModule(Module) Then Module.Export destinationPath & Module.Name & fileExtension(Module.Type)
-
+    If isCodeModule(module) Then
+    
+        module.Export destinationPath & module.Name & fileExtension(module.Type)
+        
+    End If
+    
 End Sub
 
-Private Function isCodeModule(ByRef Module As VBComponent)
+Private Function isCodeModule(ByRef module As VBComponent)
     
-    isCodeModule = (Module.Type = CLASS_MODULE Or Module.Type = STANDARD_MODULE)
+    isCodeModule = (module.Type = CLASS_MODULE Or module.Type = STANDARD_MODULE)
 
 End Function
 
@@ -82,14 +146,16 @@ Private Function fileExtension(ByRef moduleType As MODULE_TYPE) As String
 
 End Function
 
-Private Sub raiseNotValidDirectoryError(ByRef ClassName As String, ByRef functionName As String, ByRef destinationPath As String)
+Private Sub raiseNotValidDirectoryError(ByRef className As String, ByRef functionName As String, ByRef directoryPath As String)
     
-    Err.Raise NOT_VALID_DIRECTORY, CLASS_NAME, describeNotValidDirectoryError(ClassName, functionName, destinationPath)
+    Err.Raise NOT_VALID_DIRECTORY, CLASS_NAME, describeNotValidDirectoryError(className, functionName, directoryPath)
 
 End Sub
 
-Private Function describeNotValidDirectoryError(ByRef ClassName As String, ByRef functionName As String, ByRef destinationPath As String) As String
+Private Function describeNotValidDirectoryError(ByRef className As String, _
+        ByRef functionName As String, ByRef destinationPath As String) As String
     
-    describeNotValidDirectoryError = ClassName & " >> " & functionName & ". " & destinationPath & " is not a valid directory"
+    describeNotValidDirectoryError = className & " >> " & functionName & _
+                                     ". " & destinationPath & " is not a valid directory"
 
 End Function
