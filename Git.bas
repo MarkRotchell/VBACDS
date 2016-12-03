@@ -26,13 +26,22 @@ Private Function ToFileExtension(vbeComponentType As vbext_ComponentType) As Str
 End Function
 
 Public Sub RemoveAllModules()
-    Dim project As VBProject
-    Set project = Application.VBE.ActiveVBProject
+    Dim Project As VBProject
+    Set Project = Application.VBE.ActiveVBProject
      
     Dim comp As VBComponent
-    For Each comp In project.VBComponents
+    For Each comp In Project.VBComponents
         If Not comp.Name = "DevTools" And (comp.Type = vbext_ct_ClassModule Or comp.Type = vbext_ct_StdModule) Then
-        project.VBComponents.Remove comp
+        Project.VBComponents.Remove comp
         End If
     Next
+End Sub
+
+Public Sub ImportSourceFiles(sourcePath As String)
+Dim file As String
+file = Dir(sourcePath)
+    While (file <> vbNullString)
+        Application.VBE.ActiveVBProject.VBComponents.Import sourcePath & file
+        file = Dir
+    Wend
 End Sub
