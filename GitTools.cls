@@ -11,6 +11,7 @@ Private Const CLASS_NAME As String = "GitTools"
 
 Private Const FILE_EXTENSION_CLASS As String = ".cls"
 Private Const FILE_EXTENSION_MODULE As String = ".bas"
+Private Const FILE_EXTENSION_FORM As String = ".frm"
 
 Private Enum GITTOOLS_ERROR
     ERROR_CODE = vbObjectError + 513
@@ -49,6 +50,7 @@ Private Function fileExtension(ByRef moduleType As MODULE_TYPE) As String
     Select Case moduleType
         Case CLASS_MODULE: fileExtension = FILE_EXTENSION_CLASS
         Case STANDARD_MODULE: fileExtension = FILE_EXTENSION_MODULE
+        Case FORM_MODULE: fileExtension = FILE_EXTENSION_FORM
     End Select
 End Function
 Private Sub raiseNotValidDirectoryError(ByRef ClassName As String, ByRef functionName As String, ByRef destinationPath As String)
