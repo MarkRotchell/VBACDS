@@ -25,37 +25,71 @@ Private Enum MODULE_TYPE
 End Enum
 
 Public Sub ExportSourceFiles(ByRef Project As VBProject, ByVal destinationPath As String)
+
     If isDirectory(destinationPath) Then
+        
         exportSourceFilesToDirectory Project, destinationPath
+    
     Else
+        
         raiseNotValidDirectoryError CLASS_NAME, "ExportSourceFiles", destinationPath
+    
     End If
+
 End Sub
+
 Private Function isDirectory(ByRef directoryPath As String) As Boolean
+
     isDirectory = (Dir(directoryPath, vbDirectory) <> vbNullString)
+
 End Function
+
 Private Sub exportSourceFilesToDirectory(ByRef Project As VBProject, ByVal destinationPath As String)
+    
     Dim Module As VBComponent
+    
     For Each Module In Project.VBComponents
+        
         exportIfCodeModule Module, destinationPath
+    
     Next Module
+
 End Sub
+
 Private Sub exportIfCodeModule(ByRef Module As VBComponent, ByVal destinationPath As String)
+    
     If isCodeModule(Module) Then Module.Export destinationPath & Module.Name & fileExtension(Module.Type)
+
 End Sub
+
 Private Function isCodeModule(ByRef Module As VBComponent)
+    
     isCodeModule = (Module.Type = CLASS_MODULE Or Module.Type = STANDARD_MODULE)
+
 End Function
+
 Private Function fileExtension(ByRef moduleType As MODULE_TYPE) As String
+    
     Select Case moduleType
+        
         Case CLASS_MODULE: fileExtension = FILE_EXTENSION_CLASS
+        
         Case STANDARD_MODULE: fileExtension = FILE_EXTENSION_MODULE
+        
         Case FORM_MODULE: fileExtension = FILE_EXTENSION_FORM
+    
     End Select
+
 End Function
+
 Private Sub raiseNotValidDirectoryError(ByRef ClassName As String, ByRef functionName As String, ByRef destinationPath As String)
+    
     Err.Raise NOT_VALID_DIRECTORY, CLASS_NAME, describeNotValidDirectoryError(ClassName, functionName, destinationPath)
+
 End Sub
+
 Private Function describeNotValidDirectoryError(ByRef ClassName As String, ByRef functionName As String, ByRef destinationPath As String) As String
+    
     describeNotValidDirectoryError = ClassName & " >> " & functionName & ". " & destinationPath & " is not a valid directory"
+
 End Function
