@@ -55,8 +55,11 @@ Private Sub ImportSourceFilesFromDirectory(ByRef project As VBProject, ByRef sou
     Dim fileName As String: fileName = Dir(sourcePath & "*")
     
     Do Until fileName = vbNullString
+    
         project.VBComponents.Import sourcePath & fileName
+        
         fileName = Dir
+    
     Loop
 
 End Sub
