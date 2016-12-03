@@ -7,6 +7,8 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Option Explicit
+
 Private Const CLASS_NAME As String = "GitTools"
 
 Private Const FILE_EXTENSION_CLASS As String = ".cls"
