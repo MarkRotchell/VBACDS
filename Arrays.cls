@@ -83,6 +83,43 @@ Private Function isAfterNeighbour(ByRef arr As Variant, ByRef Index As Long, ByR
     
 End Function
 
+Private Function quickAreNumericsSorted(ByRef arr As Variant) As Boolean
+    
+    Dim i As Long: For i = LBound(arr) To UBound(arr) - 1
+    
+        If arr(i) > arr(i + 1) Then
+        
+            quickAreNumericsSorted = False
+            
+            Exit Function
+            
+        End If
+        
+    Next i
+    
+    quickAreNumericsSorted = True
+    
+End Function
+
+Private Function quickAreStringsSorted(ByRef arr As Variant) As Boolean
+    
+    Const STRING1_AFTER_STRING2 As Byte = 1
+
+    Dim i As Long: For i = LBound(arr) To UBound(arr) - 1
+    
+        If VBA.StrComp(arr(i), arr(i + 1)) = STRING1_AFTER_STRING2 Then
+        
+            quickAreStringsSorted = False
+            
+            Exit Function
+            
+        End If
+        
+    Next i
+    
+    quickAreStringsSorted = True
+    
+End Function
 
 Private Function isArrayOfNumeric(ByRef arr As Variant) As Boolean
 
